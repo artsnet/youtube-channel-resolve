@@ -1,0 +1,50 @@
+{
+  "name": "@artsnet/youtube-channel-resolve",
+  "version": "0.1.0",
+  "description": "Resolve a YouTube channel's ID, canonical URL, name and avatar from any URL, @handle, channel ID or video URL. No API key, no Data API quota. Library, CLI and MCP server.",
+  "license": "MIT",
+  "author": "Artsnet",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artsnet/youtube-channel-resolve.git"
+  },
+  "homepage": "https://github.com/artsnet/youtube-channel-resolve#readme",
+  "bugs": "https://github.com/artsnet/youtube-channel-resolve/issues",
+  "keywords": ["youtube", "youtube-channel", "channel-id", "handle", "mcp", "mcp-server", "cli", "cloudflare-workers", "no-api-key"],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "youtube-channel-resolve": "./dist/cli.js",
+    "youtube-channel-resolve-mcp": "./dist/mcp.js"
+  },
+  "files": ["dist", "SKILL.md", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  }
+}
