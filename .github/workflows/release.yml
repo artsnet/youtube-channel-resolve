@@ -1,0 +1,36 @@
+name: Release
+
+# Publishes to npm when a version tag is pushed (v0.1.0), or by hand from the Actions tab.
+# Needs the repository secret NPM_TOKEN: a granular access token with read/write on @artsnet and 2FA bypass.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # lets npm attach provenance (a signed link back to this commit and workflow)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Check that the tag matches package.json
+        if: github.ref_type == 'tag'
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "$expected" || { echo "tag $GITHUB_REF_NAME does not match package version $expected"; exit 1; }
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
