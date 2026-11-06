@@ -1,6 +1,6 @@
 {
   "name": "@artsnet/youtube-channel-resolve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Resolve a YouTube channel's ID, canonical URL, name and avatar from any URL, @handle, channel ID or video URL. No API key, no Data API quota. Library, CLI and MCP server.",
   "license": "MIT",
   "author": "Artsnet",

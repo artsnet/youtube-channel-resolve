@@ -3,6 +3,7 @@ import { createYouTubeChannelResolver, type YouTubeChannelResolver, type Resolve
 import { toFailure, toResult, type ResolveOutput } from "./schema.js";
 import { VERSION } from "./version.js";
 import { USER_AGENT_ENV } from "./env.js";
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 export { USER_AGENT_ENV } from "./env.js";
@@ -175,9 +176,13 @@ async function readAllStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
+/**
+ * True when this file is the script Node was started with. Package bins are symlinks in
+ * node_modules/.bin, so argv[1] is the link while import.meta.url is the real path: compare real paths.
+ */
 const isEntryPoint = (() => {
   try {
-    return process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+    return process.argv[1] !== undefined && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
   } catch {
     return false;
   }
