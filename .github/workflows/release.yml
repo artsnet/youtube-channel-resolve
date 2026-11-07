@@ -6,11 +6,20 @@ name: Release
 # trusted publisher for GitHub Actions with this repository and the workflow file "release.yml".
 # No secret is needed then. Until that is configured, the fallback step publishes with the
 # NPM_TOKEN secret (a granular access token with read/write on @artsnet and 2FA bypass).
+#
+# Run it by hand with "check only" to test the trusted-publishing connection: npm performs the
+# OIDC token exchange and a dry-run publish, logs the reason if the exchange fails, and publishes
+# nothing.
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      check_only:
+        description: "Only test trusted publishing (dry run, nothing is published)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -36,12 +45,16 @@ jobs:
         run: |
           expected="v$(node -p "require('./package.json').version")"
           test "$GITHUB_REF_NAME" = "$expected" || { echo "tag $GITHUB_REF_NAME does not match package version $expected"; exit 1; }
+      - name: Test the trusted-publishing connection (dry run)
+        if: inputs.check_only
+        run: npm publish --dry-run --access public --loglevel verbose 2>&1 | grep -i -E "oidc|provenance|ENEEDAUTH|dry-run" || true
       - name: Publish with trusted publishing (OIDC)
+        if: ${{ !inputs.check_only }}
         id: oidc
         continue-on-error: true
-        run: npm publish --access public --provenance
+        run: npm publish --access public --provenance --loglevel verbose 2>&1 | grep -v -E "^npm (http|silly|timing)" ; test "${PIPESTATUS[0]}" -eq 0
       - name: Publish with NPM_TOKEN (fallback until trusted publishing is configured)
-        if: steps.oidc.outcome == 'failure'
+        if: ${{ !inputs.check_only && steps.oidc.outcome == 'failure' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -49,4 +62,5 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
           npm publish --access public --provenance
       - name: Report
+        if: ${{ !inputs.check_only }}
         run: echo "published via ${{ steps.oidc.outcome == 'success' && 'trusted publishing (OIDC)' || 'NPM_TOKEN fallback' }}"
