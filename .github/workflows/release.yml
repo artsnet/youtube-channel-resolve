@@ -52,7 +52,10 @@ jobs:
         if: ${{ !inputs.check_only }}
         id: oidc
         continue-on-error: true
-        run: npm publish --access public --provenance --loglevel verbose 2>&1 | grep -v -E "^npm (http|silly|timing)" ; test "${PIPESTATUS[0]}" -eq 0
+        run: |
+          npm publish --access public --provenance --loglevel verbose > publish.log 2>&1; status=$?
+          grep -v -E "^npm (http|silly|timing)" publish.log || true
+          exit $status
       - name: Publish with NPM_TOKEN (fallback until trusted publishing is configured)
         if: ${{ !inputs.check_only && steps.oidc.outcome == 'failure' }}
         env:
